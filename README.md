@@ -1,1 +1,1 @@
-__OpenMP__  (Open Multi-Processing) supports multi-platform shared-memory multiprocessing programming in C, C++, and Fortran.
+__OpenMP__  is an Application Program Interface (API) that may be used to explicitly direct multi-threaded, shared memory parallelism.
