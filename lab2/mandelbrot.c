@@ -16,7 +16,7 @@
 
 #define iXmax 3000
 #define iYmax 3000
-unsigned char color[iYmax][iXmax][3];
+unsigned char color[iYmax][iXmax][4];
 
  int main()
  {
@@ -56,10 +56,10 @@ unsigned char color[iYmax][iXmax][3];
         int threadId = 0;
         int sums[4] = {0, 0, 0, 0};
 
-        #pragma omp parallel 
+        #pragma omp parallel private(threadId) num_threads(4)
         {
          threadId = omp_get_thread_num();
-         #pragma omp parallel for private(iY, iX, Iteration, Cy, Cx, Zx, Zy, Zx2, Zy2) num_threads(4)
+         #pragma omp for private(iY, iX, Iteration, Cy, Cx, Zx, Zy, Zx2, Zy2) schedule(static , 10)
 
             for(iY=0;iY<iYmax;iY++)
             {
@@ -101,11 +101,11 @@ unsigned char color[iYmax][iXmax][3];
         }
         stop = omp_get_wtime();
         fwrite(color,1, 3 * iXmax * iYmax, fp);
-        printf("%.3f \n", stop);
+        printf("Czas %.3f \n", stop - start);
 
       for(int i = 0 ; i < 4; i++)
       {
-         printf("sum[%d] = %d", i, sums[i]);
+         printf("Wartosc sum[%d] = %d \n", i, sums[i]);
       }
 
         fclose(fp);
