@@ -16,7 +16,7 @@
 
 #define iXmax 3000
 #define iYmax 3000
-unsigned char color[iYmax][iXmax][4];
+unsigned char color[iYmax][iXmax][3];
 
  int main()
  {
