@@ -63,12 +63,11 @@ int main(int argc, char **argv){
         PrintStars();
         int numThreads = 1;
         Multiply2dMatrixesParallel(widthC, heightC, tabA, tabB, tabC, numThreads);
-        
+
         PrintStars();
         PrintMatrix(tabC, 10, 3);
         PrintStars();
 
-    
         ReleaseMatrix(heightA, tabA);
         ReleaseMatrix(heightB, tabB);
         ReleaseMatrix(heightC, tabC);
