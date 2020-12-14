@@ -10,7 +10,7 @@ void MallocMatrix(int**& tab, int width, int height);
 void FillArrayWithData(int rows, int cols, int**& tab, int fixedIncrementalValue);
 void FillArrayWithZeroes(int rows, int cols, int** tab);
 void PrintMatrix(int**& tab, int toWhichColumn, int toWhichRow);
-void Multiply2dMatrixesParallel(int widthC, int heightC, int** tabA, int** tabB, int** tabC);
+void Multiply2dMatrixesParallel(int widthC, int heightC, int** tabA, int** tabB, int** tabC, int numThreads);
 void ReleaseMatrix(int height, int** tab);
 
 int main(int argc, char **argv){
@@ -19,8 +19,8 @@ int main(int argc, char **argv){
     PrintStars();
 
     /** Declaration of size of arrays **/
-    int widthA = 300, heightA = 300;
-    int widthB = 300, heightB = 300;
+    int widthA = 900, heightA = 900;
+    int widthB = 900, heightB = 900;
 
     /** Printing matrices sizes **/
     printf("Matrix A: %d x %d Matrix B: %d x %d", widthA, heightA, widthB, heightB);
@@ -47,7 +47,7 @@ int main(int argc, char **argv){
 
         const int fixedIncrementalValueforA = 1;
         FillArrayWithData(heightA, widthA, tabA, fixedIncrementalValueforA);
-        const int fixedIncrementalValueforB = 5;
+        const int fixedIncrementalValueforB = 2;
         FillArrayWithData(heightB, widthB, tabB, fixedIncrementalValueforB);
 
     	PrintStars();
@@ -59,11 +59,11 @@ int main(int argc, char **argv){
         PrintStars();
 
         PrintStars();
-        printf(">>Parallel Matrix Multiplication...\n");
+        printf(">>Parallel Matrix Multiplication in progress...\n");
         PrintStars();
-        Multiply2dMatrixesParallel(widthC, heightC, tabA, tabB, tabC);
-
-
+        int numThreads = 1;
+        Multiply2dMatrixesParallel(widthC, heightC, tabA, tabB, tabC, numThreads);
+        
         PrintStars();
         PrintMatrix(tabC, 10, 3);
         PrintStars();
@@ -144,13 +144,14 @@ void PrintStars()
     }
 }
 
-void Multiply2dMatrixesParallel(int widthC, int heightC, int** tabA, int** tabB, int** tabC)
+void Multiply2dMatrixesParallel(int widthC, int heightC, int** tabA, int** tabB, int** tabC, int numThreads)
 {
    int i,j,k,sum = 0;
    bool firstTimeEntry;
-   int numThreads = 8;
    #pragma omp parallel shared(tabA,tabB,tabC) private(i,j,k,sum,firstTimeEntry)  num_threads(numThreads)
-   {          
+   {    
+        double start, end;
+        start = omp_get_wtime();      
         firstTimeEntry = true;  
         if(firstTimeEntry)
         {
@@ -174,6 +175,8 @@ void Multiply2dMatrixesParallel(int widthC, int heightC, int** tabA, int** tabB,
             if( i == widthC - 1)
             {
                 printf("Last Thread<%d> stopped work on index %d .\n", omp_get_thread_num(), i);
+                end = omp_get_wtime();
+                printf("The job has taken %f seconds\n", end - start);
             }
         }
    }
