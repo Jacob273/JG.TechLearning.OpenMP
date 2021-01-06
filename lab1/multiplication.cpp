@@ -59,9 +59,10 @@ int main(int argc, char **argv){
         PrintStars();
 
         PrintStars();
-        printf(">>Parallel Matrix Multiplication in progress...\n");
+        int numThreads = 12;
+        printf(">>Parallel Matrix Multiplication in progress...for %i thread(s)\n", numThreads);
+        printf("Matrix A: %d x %d Matrix B: %d x %d\n", widthA, heightA, widthB, heightB);
         PrintStars();
-        int numThreads = 1;
         Multiply2dMatrixesParallel(widthC, heightC, tabA, tabB, tabC, numThreads);
 
         PrintStars();
@@ -133,7 +134,7 @@ void FillArrayWithData(int rows, int cols, int**& tab, int fixedIncrementalValue
 
 void PrintStars()
 {
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 1; i++)
     {
         for (int j = 0; j < 40; j++)
         {
