@@ -111,38 +111,3 @@ unsigned char color[iYmax][iXmax][3];
         fclose(fp);
         return 0;
  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- //TODO:
-
- /**
-
-Zmniejszajcie ja od 100 do 10 az do 1
-Jak wyrownuja sie liczby iteracje.
-
-
-//wykresy dla przyspieszenia
-//dla roznej liczby watkow
-//zmienic obrazek na 2000x2000 pixeli! (800x600 to loozik)
-
-
-//jak schedal rozklada im prace
-
- **/
