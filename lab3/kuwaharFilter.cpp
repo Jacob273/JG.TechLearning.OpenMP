@@ -1,175 +1,212 @@
 #include <stdio.h>
-#include <time.h>
+#include "EasyBMP.h"
 #include <omp.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <string>
-#include <iostream>
+ 
 
-#define RGB_MAX_VAL 255
 
-class Pixel 
-{
-    public:
-        char Red;
-        char Green;
-        char Blue;
-};
-
-class Image
-{
-    public:
-        int x;
-        int y;
-        Pixel *data;
-};
-
-class ImageReaderWriter
-{
-    public:
-
-        Image *Read(const char *filename)
-        {
-            char buff[16];
-            Image *img;
-            FILE *fp;
-            int c, rgb_comp_color;
-
-            fp = fopen(filename, "rb");
-            if (!fp) 
-            {
-                fprintf(stderr, "Unable to open file '%s'\n", filename);
-                exit(1);
-            }
-
-            //read image format
-            if (!fgets(buff, sizeof(buff), fp)) 
-            {
-                perror(filename);
-                exit(1);
-            }
-
-            //Image format check
-            if (buff[0] != 'P' || buff[1] != '6') 
-            {
-                fprintf(stderr, "Invalid image format (must be 'P6')\n");
-                exit(1);
-            }
-
-            //Allocation
-            img = (Image*)malloc(sizeof(Image));
-            if (!img) 
-            {
-                fprintf(stderr, "Unable to allocate memory\n");
-                exit(1);
-            }
-
-            //Image size information
-            if (fscanf(fp, "%d %d", &img->x, &img->y) != 2) 
-            {
-                fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
-                exit(1);
-            }
-
-            //Read RGB component
-            if (fscanf(fp, "%d", &rgb_comp_color) != 1) 
-            {
-                fprintf(stderr, "Invalid rgb component (error loading '%s')\n", filename);
-                exit(1);
-            }
-
-            //Check RGB component depth
-            if (rgb_comp_color!= RGB_MAX_VAL) 
-            {
-                fprintf(stderr, "'%s' does not have 8-bits components\n", filename);
-                exit(1);
-            }
-
-            while (fgetc(fp) != '\n');
-
-            //Allocation
-            img->data = (Pixel*)malloc(img->x * img->y * sizeof(Pixel));
-
-            if (!img) 
-            {
-                fprintf(stderr, "Unable to allocate memory\n");
-                exit(1);
-            }
-
-            //Read data from file into img->data
-            size_t size = 3 * img->x;
-            size_t count = img->y;
-
-            int totalNumberOfElementsReturned = fread(img->data, size, count, fp);
-            if (totalNumberOfElementsReturned != img->y) 
-            {
-                fprintf(stderr, "Error loading image '%s'\n", filename);
-                exit(1);
-            }
-
-            fclose(fp);
-            return img;
-        }
-
-        void Write(const char *filename, Image *img)
-        {
-            FILE *fp;
-            fp = fopen(filename, "wb");
-            if (!fp) {
-                fprintf(stderr, "Unable to open file '%s'\n", filename);
-                exit(1);
-            }
-
-            //write the header file image format
-            fprintf(fp, "P6\n");
-
-            //comments
-            fprintf(fp, "# Created by %s\n", "Jakub Gmur");
-
-            //image size
-            fprintf(fp, "%d %d\n",img->x,img->y);
-
-            // rgb component depth
-            fprintf(fp, "%d\n", RGB_MAX_VAL);
-
-            // pixel data
-            fwrite(img->data, 3 * img->x, img->y, fp);
-            fclose(fp);
-        }
-
-        void ChangeColor(Image *img)
-        {
-            int i;
-            if(img){
-
-                for(i=0;i<img->x*img->y;i++){
-                    img->data[i].Red= RGB_MAX_VAL - img->data[i].Red;
-                    img->data[i].Green= RGB_MAX_VAL - img->data[i].Green;
-                    img->data[i].Blue= RGB_MAX_VAL - img->data[i].Blue;
-                }
-            }
-        }
-};
-
+//Klasa realizujaca filtrowanie kuwahara dla obrazu kolorowego
+//Obraz wczytywany jest przy pomocy EasyBMP
 class Kuwahar
 { 
     //TODO:
-    
+    BMP img;
+    const char* _inputFileName;
+    const char* _outputFileName;
+
+    bool imgRead;
+    bool isFiltered;
+
+    private:
+        void ReadFile(const char* fileName)
+        {
+            img.ReadFromFile(fileName);
+        }
+
     public: 
-        void Filter() 
+        Kuwahar(const char* inputFileName,  const char* outputFileName)
+        {
+            _inputFileName = inputFileName;
+            _outputFileName = outputFileName;
+            imgRead = false;
+            isFiltered = false;
+        }
+
+        void Read()
+        {
+            if(!imgRead)
+            {
+                img.ReadFromFile(_inputFileName);
+                imgRead = true;
+            }
+        }
+
+        void Write()
+        {
+            if(imgRead && isFiltered)
+            {
+                img.WriteToFile(_outputFileName); 
+            }
+            else
+            {
+                printf("Could not create a filtered image. Make sure the Read() and Filter() methods were executed.");
+            }
+        }
+
+        void FilterParallel() 
         { 
-        std::cout << "Filtering...";
+                if(!imgRead || isFiltered)
+                {
+                    return;
+                }
+
+                //WIELKOSC PLIKU marbles.bmp: WIDTH: 1419 X HEIGHT:1001
+                unsigned char **red = (unsigned char**)malloc(img.TellWidth() * sizeof(char*));
+                unsigned char **green = (unsigned char**)malloc(img.TellWidth() * sizeof(char*));
+                unsigned char **blue = (unsigned char**)malloc(img.TellWidth() * sizeof(char*));
+                
+                
+                for (int i=0; i<img.TellWidth(); i++)
+                {
+                    red[i] = (unsigned char*)malloc(img.TellHeight());
+                    green[i] = (unsigned char*)malloc(img.TellHeight());
+                    blue[i] = (unsigned char*)malloc(img.TellHeight());
+            
+                    for (int j=0; j<img.TellHeight(); j++)
+                    {
+                        //SETTING RGB values from image (masked)
+                        red[i][j] = (img(i,j)->Red & 0xFF); // 0xFF = 11111111 = 255
+                        green[i][j] = (img(i,j)->Green & 0xFF);
+                        blue[i][j] = (img(i,j)->Blue & 0xFF);
+                    }
+                }
+                            
+                double redAverage[4], greenAverage[4], blueAverage[4];  //FOR AVERAGES
+                double redVariant[4], greenVariant[4], blueVariant[4];  //FOR VARIANT
+
+                int m, lowestRed, lowestGreen, lowestBlue;
+                int Size = 5;
+                int margin = (( Size - 1) / 2);
+            
+                int i, j, k, l;
+
+
+            #pragma omp parallel for private(i, j, k, l, redAverage, greenAverage , blueAverage , redVariant, greenVariant, blueVariant ) num_threads(8)
+            for (i = margin; i < img.TellWidth() - margin; i++)
+                for ( j = margin;  j < img.TellHeight() - margin; j++)
+                {
+
+                    //SETTING AVERAGEs to 0
+                    for (k=0; k < 4; k++)
+                    {
+                        redAverage[k] = 0;
+                        greenAverage[k] = 0;
+                        blueAverage[k] = 0;
+                    }
+
+                    //Calculating AVERAGE
+                    for (k=0;  k < 3; k++)
+                        for (l=0;  l < 3; l++)
+                        {
+                            const float numberOfPixels = 9.0;
+                            redAverage[0] += red[i + k - margin][j + l - margin] / numberOfPixels;
+                            redAverage[1] += red[i + k ][ j + l - margin] / numberOfPixels;
+                            redAverage[2] += red[i + k - margin][j + l] / numberOfPixels;
+                            redAverage[3] += red[i + k][ j + l] / numberOfPixels;
+            
+                            greenAverage[0] += green[ i + k - margin][ j + l - margin] / numberOfPixels;
+                            greenAverage[1] += green[ i + k][ j + l - margin] / numberOfPixels;
+                            greenAverage[2] += green[i + k - margin][j + l] / numberOfPixels;
+                            greenAverage[3] += green[i + k][j + l] / numberOfPixels;
+            
+                            blueAverage[0] += blue[i + k - margin][j + l - margin] / numberOfPixels;
+                            blueAverage[1] += blue[i + k][j + l - margin] / numberOfPixels;
+                            blueAverage[2] += blue[i + k - margin][j + l] / numberOfPixels;
+                            blueAverage[3] += blue[i + k][j + l] / numberOfPixels;
+                        }
+            
+                    //SETTINGS VARIANTS TO 0
+                    for (k=0; k < 4; k++)
+                    {
+                        redVariant[k] = 0;
+                        greenVariant[k] = 0;
+                        blueVariant[k] = 0;
+                    }
+
+                    //CALCULATING VARIANTS
+                    for (k=0; k < 3; k++)
+                        for (l=0; l < 3; l++)
+                        {
+                            redVariant[0] += (red[i + k - margin][j + l - margin] - redAverage[0]) * (red[i + k - margin][j + l - margin] - redAverage[0]);
+                            redVariant[1] += (red[i + k][j + l - margin] - redAverage[1]) * (red[i + k][j + l - margin] - redAverage[1]);
+                            redVariant[2] += (red[i + k - margin][j + l] - redAverage[2]) * (red[i + k - margin][j + l] - redAverage[2]);
+                            redVariant[3] += (red[i + k][j + l] - redAverage[3]) * (red[i + k][j + l] - redAverage[3]);
+            
+                            greenVariant[0] += (green[i + k - margin][j + l - margin] - greenAverage[0]) * (green[i + k - margin][j + l - margin] - greenAverage[0]);
+                            greenVariant[1] += (green[i + k][j + l - margin] - greenAverage[1]) * (green[i + k][j + l - margin] - greenAverage[1]);
+                            greenVariant[2] += (green[i + k - margin][j + l] - greenAverage[2]) * (green[i + k - margin][j + l] - greenAverage[2]);
+                            greenVariant[3] += (green[i + k][j + l] - greenAverage[3]) * (green[i + k][j + l] - greenAverage[3]);
+            
+                            blueVariant[0] += (blue[i + k - margin][j + l - margin] - blueAverage[0]) * (blue[i + k - margin][j + l - margin] - blueAverage[0]);
+                            blueVariant[1] += (blue[i + k][j + l - margin] - blueAverage[1]) * (blue[i + k][j + l - margin] - blueAverage[1]);
+                            blueVariant[2] += (blue[i + k - margin][j + l] - blueAverage[2]) * (blue[i + k - margin][j + l] - blueAverage[2]);
+                            blueVariant[3] += (blue[i + k][j + l] - blueAverage[3]) * (blue[i + k][j + l] - blueAverage[3]);
+                        }
+            
+                    //FINDING LOWEST VARIATIONS FOR RED, GREEN AND BLUE
+                    lowestRed=0;
+                    for (k=1; k < 4; k++)
+                    {
+                                if (redVariant[k] < redVariant[lowestRed])
+                                {
+                                lowestRed = k;
+                                }
+                    }
+
+                    lowestGreen=0;
+                    for (k=1; k < 4; k++)
+                    {
+                                if (greenVariant[k] < greenVariant[lowestGreen])
+                                {
+                                    lowestGreen = k;
+                                }
+                    }
+            
+                    lowestBlue=0;
+                    for (k=1; k < 4; k++)
+                    {
+                            if (blueVariant[k] < blueVariant[lowestBlue])
+                            {
+                                lowestBlue = k;
+                            }
+                    }
+                    
+                    //SETTING the i, j Pixel on img
+                    img(i,j)->Red  = (int)redAverage[lowestRed];
+                    img(i,j)->Green = (int)greenAverage[lowestGreen];
+                    img(i,j)->Blue = (int)blueAverage[lowestBlue];
+            }
+            isFiltered = true;
         } 
 }; 
 
-int main(int argc, char **argv){
+int main()
+{
+    const char* fileName = "marbles.bmp";
+    const char* outputFileName = "marbles_new.bmp";
+    Kuwahar* kuwahar = new Kuwahar(fileName, outputFileName);
+    kuwahar->Read();
 
-     std::cout << argv[0];
-     ImageReaderWriter *imgReaderWrite = new ImageReaderWriter();
-     Image *img = imgReaderWrite->Read(".//sample_5184×3456.ppm");
-     imgReaderWrite->ChangeColor(img);
-     imgReaderWrite->Write(".//sample_5184×3456_new.ppm", img);
+    double start = omp_get_wtime();
+    kuwahar->FilterParallel();
+    double stop = omp_get_wtime();
+    printf("TIME: %.3f \n", stop - start);
 
-    return 0;
+    kuwahar->Write();
 }
+
+// CZASY dla Size = 5, 
+//1 WATEK TIME: 0.461 Size 5
+//2 WATKI TIME 0.243 Size 5
+//4 WATKI TIME 0.136 Size 5
+//8 WATKOW TIME: 0.094  Size 5
+ //Wielkosc pliku testowego marbles.bmp: WIDTH: 1419 X HEIGHT:1001
