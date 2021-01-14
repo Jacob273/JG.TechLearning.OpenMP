@@ -13,7 +13,7 @@ void DrawSingleTriangle() {
         
         const int numberOfVectors = 3;
         const int dimensions = 2;
-        const GLfloat triangleVertices[numberOfVectors][dimensions] = { {-0.5, -0.7}, {0.5, -0.7}, {0.0, 0.5} };
+        const GLfloat triangleVertices[numberOfVectors][dimensions] = { {-0.2, -0.5}, {-0.2, 0.5}, {0.7, -0.5} };
         glVertex2fv(triangleVertices[0]);
         glVertex2fv(triangleVertices[1]);
         glVertex2fv(triangleVertices[2]);
