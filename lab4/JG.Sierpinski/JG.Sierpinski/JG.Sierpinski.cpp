@@ -1,7 +1,7 @@
 #include <GL/glut.h>
 
 // Clears the current window and draws a triangle.
-void display() {
+void DrawSingleTriangle() {
 
     // Set every pixel in the frame buffer to the current clear color.
     glClear(GL_COLOR_BUFFER_BIT);
@@ -13,10 +13,10 @@ void display() {
         
         const int numberOfVectors = 3;
         const int dimensions = 2;
-        const GLfloat triangleVectors[numberOfVectors][dimensions] = { {-0.5, -0.7}, {0.5, -0.7}, {0.0, 0.5} };
-        glVertex2fv(triangleVectors[0]);
-        glVertex2fv(triangleVectors[1]);
-        glVertex2fv(triangleVectors[2]);
+        const GLfloat triangleVertices[numberOfVectors][dimensions] = { {-0.5, -0.7}, {0.5, -0.7}, {0.0, 0.5} };
+        glVertex2fv(triangleVertices[0]);
+        glVertex2fv(triangleVertices[1]);
+        glVertex2fv(triangleVertices[2]);
     glEnd();
 
     // Flush drawing command buffer to make drawing happen as soon as possible.
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 
     // Tell GLUT that whenever the main window needs to be repainted that it
     // should call the function display().
-    glutDisplayFunc(display);
+    glutDisplayFunc(DrawSingleTriangle);
 
     // Tell GLUT to start reading and processing events.  This function
     // never returns; the program only exits when the user closes the main
