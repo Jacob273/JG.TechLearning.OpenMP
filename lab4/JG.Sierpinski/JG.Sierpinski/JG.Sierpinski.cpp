@@ -9,19 +9,39 @@ void DrawSingleTriangle() {
     // Drawing is done by specifying a sequence of vertices
     glBegin(GL_TRIANGLES);
         
-        glColor3f(3, 5, 155);
+        glColor3f(1.0, 1.0, 1.0);
         
         const int numberOfVectors = 3;
         const int dimensions = 2;
-        const GLfloat triangleVertices[numberOfVectors][dimensions] = { {-0.2, -0.5}, {-0.2, 0.5}, {0.7, -0.5} };
+
+        //dlugosc boku AB
+        const float sideLength = 0.6;
+
+        //poczatek ukladu wspolrzednych
+        const GLfloat begginingOfCoordinateSystem[2] = { -0.5, 0 };
+
+        const GLfloat triangleVertices[numberOfVectors][dimensions] = { {begginingOfCoordinateSystem[0] + (-0.2), begginingOfCoordinateSystem[1]}, {begginingOfCoordinateSystem[0]  +(-0.2), begginingOfCoordinateSystem[1] + sideLength}, {begginingOfCoordinateSystem[0] + 0.7, begginingOfCoordinateSystem[1]} };
         glVertex2fv(triangleVertices[0]);
         glVertex2fv(triangleVertices[1]);
         glVertex2fv(triangleVertices[2]);
+
+        const float sideLength2 = 0.3;
+        glColor3f(1.0, 0, 0);
+        const GLfloat triangleVertices2[numberOfVectors][dimensions] = { {begginingOfCoordinateSystem[0] + (-0.2), begginingOfCoordinateSystem[1]}, {begginingOfCoordinateSystem[0] + (-0.2), begginingOfCoordinateSystem[1] + sideLength2}, {begginingOfCoordinateSystem[0] + 0.7, begginingOfCoordinateSystem[1]} };
+        glVertex2fv(triangleVertices2[0]);
+        glVertex2fv(triangleVertices2[1]);
+        glVertex2fv(triangleVertices2[2]);
+        //draw smaller one
+
+
+
     glEnd();
 
     // Flush drawing command buffer to make drawing happen as soon as possible.
     glFlush();
 }
+
+
 
 // Initializes GLUT, the display mode, and main window; registers callbacks;
 // enters the main event loop.
