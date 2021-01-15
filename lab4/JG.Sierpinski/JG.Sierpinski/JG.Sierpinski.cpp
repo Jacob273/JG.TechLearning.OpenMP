@@ -2,26 +2,9 @@
 #include <cmath>
 #include <iostream>
 
-/**
-    X = (A + B )/ 2
-    Y = (A + C) / 2
-**/
-GLfloat GetMidpoint(GLfloat coord1, GLfloat coord2)
-{
-    return (coord1 + coord2) / 2;
-}
 
-class VerticesGenerator {
-
-public: 
-    GLfloat* Generate(GLfloat a, GLfloat b)
-    {
-        GLfloat* tmp = new GLfloat[2];
-        tmp[0] = a;
-        tmp[1] = b;
-        return tmp;
-    }
-};
+GLfloat begginingOfCoordinateSystem[2] = { 0, 0 };
+GLfloat sideLength = 0.5;
 
 class Triangle {
 
@@ -110,65 +93,119 @@ public:
     }
 };
 
-// Clears the current window and draws a triangle.
-void DrawTwoTriangles() {
+class GeometryHelper {
 
-    VerticesGenerator generator = VerticesGenerator();
+public:
 
-    // Set every pixel in the frame buffer to the current clear color.
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLfloat* GenerateVertices(GLfloat a, GLfloat b)
+    {
+        GLfloat* tmp = new GLfloat[2];
+        tmp[0] = a;
+        tmp[1] = b;
+        return tmp;
+    }
 
-    // Drawing is done by specifying a sequence of vertices
-    glBegin(GL_TRIANGLES);
-        
-        glColor3f(1.0, 1.0, 1.0);
-        
-        const int numberOfVectors = 3;
-        const int dimensions = 2;
+    GLfloat* DivideVertices(GLfloat* vertices, GLfloat divider)
+    {
+        vertices[0] /= divider;
+        vertices[1] /= divider;
+        return vertices;
+    }
 
-        //dlugosc boku AB
-        GLfloat sideLength = 0.6;
+    Triangle* GenerateTriangle() {
+        GLfloat* A = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1]);
+        GLfloat* B = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1] + sideLength);
+        GLfloat* C = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)0.7, begginingOfCoordinateSystem[1]);
+        return new Triangle(A, B, C);
+    }
 
-        //poczatek ukladu wspolrzednych
-        GLfloat begginingOfCoordinateSystem[2] = { -0.5, 0 };
-        
-        GLfloat* A = generator.Generate(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1]);
-        GLfloat* B = generator.Generate(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1] + sideLength);
-        GLfloat* C = generator.Generate(begginingOfCoordinateSystem[0] + (GLfloat)0.7, begginingOfCoordinateSystem[1]);
-
-        Triangle* mainTriangle = new Triangle(A, B ,C);
-        mainTriangle->PrintMyVertices();
-        mainTriangle->PrintMidpoints();
-
-        // Rysowanie trojkata glownego
-        glVertex2fv(mainTriangle->A);
-        glVertex2fv(mainTriangle->B);
-        glVertex2fv(mainTriangle->C);
-
-        GLfloat* Aprim = mainTriangle->GetMidPointsAB();
-        GLfloat* Bprim = mainTriangle->GetMidPointsBC();
-        GLfloat* Cprim = mainTriangle->GetMidPointsAC();
+};
 
 
-        Triangle* subTriangle = new Triangle(Aprim, Bprim, Cprim);
-        
-        glColor3f(1.0, 0, 0);
-        glVertex2fv(subTriangle->A);
-        glVertex2fv(subTriangle->B);
-        glVertex2fv(subTriangle->C);
+class DrawingObject
+{
 
-    glEnd();
+public:
+    static int counter;
+    int _id;
 
-    // Flush drawing command buffer to make drawing happen as soon as possible.
-    glFlush();
+    DrawingObject() 
+    {
+        _id = 0;
+    }
+
+    void DrawTriangle(Triangle* triangle, GLfloat r, GLfloat g, GLfloat b) {
+        glColor3f(r, g, b);
+        glVertex2fv(triangle->A);
+        glVertex2fv(triangle->B);
+        glVertex2fv(triangle->C);
+    }
+
+
+
+
+    void RecursiveDrawing(Triangle* firstTriangle, int level)
+    {
+        _id = counter++;
+
+        GLfloat r = rand() / ((float)RAND_MAX + 1);
+        GLfloat g = 0 + rand() / ((float)RAND_MAX + 1);
+        GLfloat b = 0 + rand() / ((float)RAND_MAX + 1);
+
+        std::cout << "level: " << (GLfloat)level << std::endl;
+        std::cout << "triangleID: >>" << _id << ">>" << std::endl << std::endl;
+        firstTriangle->PrintMyVertices();
+        counter++;
+        DrawTriangle(firstTriangle, r, g, b);
+        if (level > 0)
+        {
+            GeometryHelper helper = GeometryHelper();
+
+            GLfloat* ABMid = firstTriangle->GetMidPointsAB();
+            GLfloat* BCMid = firstTriangle->GetMidPointsBC();
+            GLfloat* ACMid = firstTriangle->GetMidPointsAC();
+
+            Triangle* second = new Triangle(ABMid, BCMid, ACMid);
+
+            GLfloat* aPrim = second->GetMidPointsAC();
+            GLfloat* bPrim = helper.GenerateVertices(firstTriangle->A[0], firstTriangle->A[1] + firstTriangle->B[1] / 4);
+            GLfloat* cPrim = helper.GenerateVertices(second->GetMidPointsAC()[0], firstTriangle->C[1]);
+
+            Triangle* third = new Triangle(aPrim, bPrim, cPrim);
+
+            RecursiveDrawing(second, 0);
+            RecursiveDrawing(third, 0);
+            //RecursiveDrawing(new Triangle(ABMid, BCMid, ACMid), 0);
+        }
+    }
+
+    // Clears the current window and draws a triangle.
+    void Trampoline_MainDrawing() 
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+        glBegin(GL_TRIANGLES);
+        GeometryHelper helper = GeometryHelper();
+        Triangle* main = helper.GenerateTriangle();
+        int level = 3;
+        RecursiveDrawing(main, level);
+        glEnd();
+        glFlush();
+    }
+};
+int DrawingObject::counter = 0;
+
+
+DrawingObject* drawObj = new DrawingObject();
+extern "C" void Trampoline_MainDrawing()
+{
+    return drawObj->Trampoline_MainDrawing();
 }
-
 
 
 // Initializes GLUT, the display mode, and main window; registers callbacks;
 // enters the main event loop.
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv) 
+{
     // Use a single buffered window in RGB mode
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
@@ -185,7 +222,7 @@ int main(int argc, char** argv) {
 
     // Tell GLUT that whenever the main window needs to be repainted that it
     // should call the function display().
-    glutDisplayFunc(DrawTwoTriangles);
+    glutDisplayFunc(Trampoline_MainDrawing);
 
     // Tell GLUT to start reading and processing events.  This function
     // never returns; the program only exits when the user closes the main
