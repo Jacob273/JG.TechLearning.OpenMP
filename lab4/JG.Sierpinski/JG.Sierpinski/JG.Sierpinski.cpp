@@ -4,7 +4,7 @@
 
 
 GLfloat begginingOfCoordinateSystem[2] = { 0, 0 };
-GLfloat sideLength = 0.5;
+GLfloat sideLength = 0.6;
 
 class Triangle {
 
@@ -115,7 +115,7 @@ public:
     Triangle* GenerateTriangle() {
         GLfloat* A = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1]);
         GLfloat* B = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)(-0.2), begginingOfCoordinateSystem[1] + sideLength);
-        GLfloat* C = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)0.7, begginingOfCoordinateSystem[1]);
+        GLfloat* C = GenerateVertices(begginingOfCoordinateSystem[0] + (GLfloat)0.6, begginingOfCoordinateSystem[1]);
         return new Triangle(A, B, C);
     }
 
@@ -164,29 +164,30 @@ public:
             GLfloat* ABMid = firstTriangle->GetMidPointsAB();
             GLfloat* BCMid = firstTriangle->GetMidPointsBC();
             GLfloat* ACMid = firstTriangle->GetMidPointsAC();
-
             Triangle* second = new Triangle(ABMid, BCMid, ACMid);
             //B
             //
             //A     C
 
-            //aprim     bprim
+            //c1        a1
             //
-            //          cprim
+            //          b1
 
-            GLfloat* aPrim = helper.GenerateVertices((second->A[0] + second->C[0]) / 2, (second->A[1] + second->C[1]) / 2);//second->GetMidPointsAC();
-            GLfloat* bPrim = helper.GenerateVertices(aPrim[0] + (second->C[0] - second->B[0]) / 2, aPrim[1] + (second->C[1] - second->B[1]) / 2);
-            GLfloat* cPrim = helper.GenerateVertices(aPrim[0] + (second->A[0] - second->C[0]) / 2, aPrim[1] + (second->A[1] - second->B[1]) / 2);
-            Triangle* third = new Triangle(aPrim, bPrim, cPrim);
+            GLfloat* a1 = helper.GenerateVertices((second->A[0] + second->C[0]) / 2, (second->A[1] + second->C[1]) / 2);
+            GLfloat* b1 = helper.GenerateVertices(a1[0] + (second->C[0] - second->B[0]) / 2, a1[1] + (second->C[1] - second->B[1]) / 2);
+            GLfloat* c1 = helper.GenerateVertices(a1[0] + (second->A[0] - second->C[0]) / 2, a1[1] + (second->A[1] - second->B[1]) / 2);
+            Triangle* left = new Triangle(a1, b1, c1);
 
 
-            //GLfloat* aPrim2 = helper.GenerateVertices((second->B[0] + second->C[0]) / 2, (second->A[1] + second->C[1]) / 2);//second->GetMidPointsAC();
-            //GLfloat* bPrim2 = helper.GenerateVertices(aPrim[0] + (second->C[0] + second->B[0]) / 2, aPrim[1] + (second->C[1] + second->B[1]) / 2);
-            //GLfloat* cPrim2 = helper.GenerateVertices(aPrim[0] + (second->A[0] + second->C[0]) / 2, aPrim[1] + (second->A[1] + second->B[1]) / 2);
-            //Triangle* fourth = new Triangle(aPrim2, bPrim2, cPrim2);
+            GLfloat* a2 = helper.GenerateVertices((second->B[0] + second->C[0]) / 2, (second->A[1] + second->C[1]) / 2);
+            GLfloat* b2 = helper.GenerateVertices(a2[0] + (second->C[0] + second->B[0]) / 2, a2[1]);
+            GLfloat* c2 = helper.GenerateVertices(a2[0] + (second->C[0] + second->B[0]) / 2, second->C[1]);
+            Triangle* right = new Triangle(a2, b2, c2);
            
+            RecursiveDrawing(left, level - 1);
+            RecursiveDrawing(right, level - 1);
             RecursiveDrawing(second, level - 1);
-            RecursiveDrawing(third, level - 1);
+
         }
     }
 
@@ -197,7 +198,7 @@ public:
         glBegin(GL_TRIANGLES);
         GeometryHelper helper = GeometryHelper();
         Triangle* main = helper.GenerateTriangle();
-        int level = 1;
+        int level = 2;
         RecursiveDrawing(main, level);
         glEnd();
         glFlush();
