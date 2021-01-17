@@ -148,11 +148,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="JG.Sierpinski.cpp" />
-    <ClCompile Include="SierpinskiPPM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\glut.h" />
     <ClInclude Include="SierpinskiOpenGL.h" />
+    <ClInclude Include="SierpinskiPPM.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

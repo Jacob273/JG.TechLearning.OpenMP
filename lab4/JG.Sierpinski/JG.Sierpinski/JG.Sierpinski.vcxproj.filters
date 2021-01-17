@@ -23,5 +23,11 @@
     <ClInclude Include="..\..\glut.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SierpinskiOpenGL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SierpinskiPPM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

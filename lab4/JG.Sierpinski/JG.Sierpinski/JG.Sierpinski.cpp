@@ -1,9 +1,9 @@
 #include "SierpinskiOpenGL.h"
+#include "SierpinskiPPM.h"
 
-
-// Initializes GLUT, the display mode, and main window; registers callbacks;
-// enters the main event loop.
 int main(int argc, char** argv)
 {
-    SierpinskiOpenGL::Run(argc, argv);
+    //SierpinskiOpenGL::Run(argc, argv);
+    SierpinskiPPM::Sierpinski* s = new SierpinskiPPM::Sierpinski(800, 800, 3);
+    s->Run();
 }
